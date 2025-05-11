@@ -200,9 +200,45 @@ void Showbook(BookPtr head)
             pshow = pshow->next;
         }
         free(tmp);  // 释放临时结点
+
+        printf("\n是否查看单本书籍借阅信息？(y键确定,其他键退出)：");
+        char op;
+        getchar();  // 清除换行符
+        scanf("%c", &op);
+        if (op == 'y')
+        {
+            ShowBookInfo(head);
+        }
     }
     printf("\n查看完成\n");
 }
+
+void ShowBookInfo(BookPtr head)
+{
+    printf("请输入要查看的书籍ISBN：");
+    char ISBN[200];
+    scanf("%s", ISBN);
+    BookPtr p = head;
+    while (p != NULL && strcmp(p->ISBN, ISBN) != 0)
+    {
+        p = p->next;
+    }
+    if (p == NULL)
+    {
+        printf("无此书\n");
+        return;
+    }
+    else if (p->lent_account == 0)
+    {
+        printf("暂无借阅者信息\n");
+        return;
+    }
+    printf("借阅者信息如下：\n");
+    for (int i = 0; i < p->lent_account; i++)
+    {
+        printf("%s ", p->lent_user[i]);
+    }
+}  // 显示单本书信息
 
 void Showuser(UserPtr head)
 {
@@ -363,7 +399,7 @@ void ShowUserInfo(UserPtr head, int user_id)
         printf("您已借阅的书籍有：\n");
         for (int i = 0; i < pshow->borrowed_account; i++)
         {
-            printf("%s ", pshow->borrowed_ISBN[i]);
+            printf("%s ", pshow->borrowed_book[i]);
         }
         printf("\n");
     }
@@ -406,10 +442,13 @@ void BorrowBook(BookPtr book_head, UserPtr user_head, int user_id)
     else
     {
         // 更新数据
-        pbook->stock--;
+        strcpy(puser->borrowed_book[puser->borrowed_account],
+               pbook->BookName);  // 将借阅的书籍ISBN存入用户信息中
+        strcpy(pbook->lent_user[pbook->lent_account],
+               puser->Username);  // 将借阅的用户存入书籍信息中
         puser->borrowed_account++;
-        strcpy(puser->borrowed_ISBN[puser->borrowed_account - 1],
-               pbook->ISBN);  // 将借阅的书籍ISBN存入用户信息中
+        pbook->stock--;
+        pbook->lent_account++;
         printf("借阅成功！剩余库存：%d\n", pbook->stock);
     }
 }
@@ -418,16 +457,16 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
     screen_clear();
 
     ShowUserInfo(user_head, user_id);
-    char returnISBN[200];
-    printf("输入要归还的ISBN: ");
-    scanf("%s", returnISBN);
+    char book[200];
+    printf("输入要归还的书名（带书名号）: ");
+    scanf("%s", book);
 
     // 查找书籍和用户
     BookPtr pbook = book_head;
     UserPtr puser = user_head;
     while (puser != NULL && puser->id != user_id)
         puser = puser->next;
-    while (pbook != NULL && strcmp(pbook->ISBN, returnISBN) != 0)
+    while (pbook != NULL && strcmp(pbook->BookName, book) != 0)
         pbook = pbook->next;
     // 验证逻辑
     if (!pbook || !puser)
@@ -468,10 +507,10 @@ UserPtr read_users_from_file(const char *filename,
             break;
         }
 
-        // 动态解析ISBN（逐个读取剩余字段）
+        // 动态解析书名（逐个读取剩余字段）
         for (int i = 0; i < p->borrowed_account; i++)
         {
-            fscanf(file, "%s", p->borrowed_ISBN[i]);
+            fscanf(file, "%s", p->borrowed_book[i]);
         }
 
         // 尾插法构建链表
@@ -487,31 +526,33 @@ BookPtr read_books_from_file(const char *filename)
 {
     FILE *file = fopen(filename, "r");
 
-    BookPtr head = NULL;
-    BookPtr node = (BookPtr)malloc(sizeof(Book));
-    node->next = NULL;
-
-    while (fscanf(file, "%s %s %s %s %d %d", node->ISBN, node->BookName,
-                  node->Writer, node->Press, &node->total, &node->stock) == 6)
+    BookPtr head = NULL, tail = NULL;
+    BookPtr p = (BookPtr)malloc(sizeof(Book));
+    while (!feof(file))
     {
-        if (!head)
+        p = (BookPtr)malloc(sizeof(Book));
+        p->next = NULL;
+        // 基础字段解析
+        if (fscanf(file, "%s %s %s %s %d %d %d", p->ISBN, p->BookName,
+                   p->Writer, p->Press, &p->total, &p->stock,
+                   &p->lent_account) != 7)
         {
-            head = node;
+            free(p);
+            break;
         }
 
-        else
+        // 动态解析借阅者（逐个读取剩余字段）
+        for (int i = 0; i < p->lent_account; i++)
         {
-            BookPtr p = head;
-            while (p->next != NULL)
-            {
-                p = p->next;
-            }  // 找到链表最后一个结点
-            p->next = node;  // 将新结点接入链表
+            fscanf(file, "%s", p->lent_user[i]);
         }
-        node = (BookPtr)malloc(sizeof(Book));  // 创建新结点
-        node->next = NULL;                     // 下一结点先指向空
+
+        // 尾插法构建链表
+        if (!head)
+            head = tail = p;
+        else
+            tail->next = p, tail = p;
     }
-    free(node);  // 把未使用的结点释放
     fclose(file);
     return head;
 }  // 读取书籍信息
@@ -531,7 +572,7 @@ void write_users_to_file(const char *filename, UserPtr head, int id)
         // 借阅信息写入
         for (int i = 0; i < p->borrowed_account; i++)
         {
-            fprintf(file, " %s", p->borrowed_ISBN[i]);
+            fprintf(file, " %s", p->borrowed_book[i]);
         }
 
         fprintf(file, "\n");  // 结束当前用户记录
@@ -545,8 +586,15 @@ void write_books_to_file(const char *filename, BookPtr head)
     BookPtr p = head;
     while (p != NULL)
     {
-        fprintf(file, "%s %s %s %s %d %d\n", p->ISBN, p->BookName, p->Writer,
-                p->Press, p->total, p->stock);
+        // 基础信息写入
+        fprintf(file, "%s %s %s %s %d %d %d\n", p->ISBN, p->BookName, p->Writer,
+                p->Press, p->total, p->stock, p->lent_account);
+        // 借阅信息写入
+        for (int i = 0; i < p->lent_account; i++)
+        {
+            fprintf(file, " %s", p->lent_user[i]);
+        }
+        fprintf(file, "\n");  // 结束当前书籍记录
         p = p->next;
     }
     fclose(file);
