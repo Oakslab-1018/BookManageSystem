@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS 1
 #define ADMIN "admin"
 #define ADMINPASS "123"
 typedef struct user
@@ -38,18 +37,17 @@ void addBook(BookPtr head);//添加书籍信息
 BookPtr Delbook(BookPtr head);  // 删除书籍信息，返回新的链表头替换原链表头
 void ModifyBook(BookPtr head);//修改书籍信息
 // 用户函数
-void ShowUserInfo(UserPtr head, char *username);//显示用户信息
-void BorrowBook(BookPtr book_head, UserPtr user_head, char *username);//借书函数
-void ReturnBook(BookPtr book_head, UserPtr user_head, char *username);  // 还书函数
-void ModifyUserInfo(UserPtr head,char *username);//修改个人信息
+void ShowUserInfo(UserPtr head, int user_id);//显示用户信息
+void BorrowBook(BookPtr book_head, UserPtr user_head, int user_id);//借书函数
+void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id);  // 还书函数
+void ModifyUserInfo(UserPtr head,int user_id);//修改个人信息
 // 注册和登陆校验
-UserPtr addUser(UserPtr head);  // 注册用户
-char* Login(int n, UserPtr head,char *username);//管理员和用户登陆函数（传账号密码）
-int ExistUser(UserPtr head, char *username, char *password);//验证用户登录
-void Admin_or_User(char user_account[], char password[], int n, UserPtr head);//验证身份
+UserPtr addUser(UserPtr head,int *current_id);  // 注册用户
+void Login(int n, UserPtr head,int *user_id);//管理员和用户登陆函数（传账号密码）
+int ExistUser(UserPtr head, int user_id, char *password);//验证用户登录
 //文件读写
-UserPtr read_users_from_file(const char *filename);  // 读取用户信息
+UserPtr read_users_from_file(const char *filename,int *current_id);  // 读取用户信息
 BookPtr read_books_from_file(const char *filename);  // 读取书籍信息
-void write_users_to_file(const char* filename, UserPtr head); // 写入用户信息
+void write_users_to_file(const char* filename, UserPtr head,int id); // 写入用户信息
 void write_books_to_file(const char *filename, BookPtr head);  // 写入书籍信息
 

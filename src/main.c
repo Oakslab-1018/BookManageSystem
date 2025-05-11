@@ -57,11 +57,11 @@ int UserMenu()
 
 /* 主菜单部分 */
 
-int ExistUser(UserPtr head, char *user_account, char *password)
+int ExistUser(UserPtr head, int user_id, char *password)
 {
     UserPtr p = head;
-    while (p != NULL && (strcmp(p->Username, user_account) != 0 ||
-                         strcmp(p->password, password) != 0))
+    while (p != NULL &&
+           ((p->id != user_id) || (strcmp(p->password, password) != 0)))
     {
         p = p->next;
     }  // 遍历user链表，查找用户名和密码匹配的节点
@@ -74,41 +74,10 @@ int ExistUser(UserPtr head, char *user_account, char *password)
     }
 }
 
-void Admin_or_User(char user_account[], char password[], int n, UserPtr head)
-{
-    if (n == 1)
-    {
-        if (strcmp(user_account, ADMIN) == 0 &&
-            strcmp(password, ADMINPASS) == 0)  // 管理员校验
-        {
-            return;
-        }
-        else
-        {
-            printf("账号密码错误，自动退出！\n");
-            exit(0);
-        }
-    }
-    else if (n == 2)
-    {
-        if (ExistUser(head, user_account, password))  // 用户校验
-        {
-            return;
-        }
-        else
-        {
-            printf("账号密码错误，自动退出！\n");
-            exit(0);
-        }
-    }
-    else
-        exit(0);
-}
-// 身份校验
-
-char *Login(int n, UserPtr head, char *username)
+void Login(int n, UserPtr head, int *user_id)
 {
     char account[200];
+    int id;
     char password[200];
     if (n == 1)  // 管理员
     {
@@ -116,25 +85,34 @@ char *Login(int n, UserPtr head, char *username)
         scanf("%s", account);
         printf("请输入密码：");
         scanf("%s", password);
-        Admin_or_User(account, password, n, head);
-        return NULL;  // 管理员登录不需要返回账号名
+        if (strcmp(account, ADMIN) != 0 || strcmp(password, ADMINPASS) != 0)
+        {
+            printf("账号密码错误，自动退出！\n");
+            exit(0);
+        }  // 管理员校验
     }
-    else if (n == 2)
+    else if (n == 2)  // 用户
     {
-        printf("请输入姓名：");
-        scanf("%s", account);
+        printf("请输入登陆id：");
+        scanf("%d", &id);
         printf("请输入密码：");
         scanf("%s", password);
-        Admin_or_User(account, password, n, head);
-        strcpy(username, account);  // 将账号名复制到username中
-        return username;            // 返回账号名
+        if (ExistUser(head, id, password))
+        {
+            *user_id = id;
+        }
+        else
+        {
+            printf("账号密码错误，自动退出！\n");
+            exit(0);
+        }
     }
     else
     {
         exit(0);
     }
 }  // 登录模块
-UserPtr addUser(UserPtr head)
+UserPtr addUser(UserPtr head, int *current_id)
 {
     screen_clear();
 
@@ -146,6 +124,10 @@ UserPtr addUser(UserPtr head)
 
     UserPtr pnew = (UserPtr)malloc(sizeof(User));
     pnew->next = NULL;
+
+    pnew->id = *current_id;  // 分配用户ID
+    (*current_id)++;         // 更新最新可分配ID
+
     printf("请输入注册信息：\n");
     printf("姓名：");
     scanf("%s", pnew->Username);  // 会在缓冲区残留换行符
@@ -174,7 +156,7 @@ UserPtr addUser(UserPtr head)
     }
     // 尾插接入user链表
     p->next = pnew;
-    printf("注册成功\n");
+
     return head;
 }  // 用户注册模块
 
@@ -236,17 +218,20 @@ void Showuser(UserPtr head)
         pshow->next = head;
         printf(
             "\t----------------------------------------------------------------"
+            "-----"
             "---"
             "-----"
             "---\n");
-        printf("\t姓名\t\t性别\t\t年龄\t\t电话\t\t已借阅书籍数\n");
+        printf("\tid\t姓名\t\t性别\t\t年龄\t\t电话\t\t已借阅书籍数\n");
         printf(
             "\t----------------------------------------------------------------"
+            "-----"
             "---"
             "-----"
             "---\n");
         while ((pshow->next) != NULL)
         {
+            printf("\t%d ", pshow->next->id);
             printf("\t%s ", pshow->next->Username);
             printf("\t\t%s", pshow->next->Sex);
             printf("\t\t%s", pshow->next->Old);
@@ -364,13 +349,13 @@ void ModifyBook(BookPtr head)
     }
 }
 
-void ShowUserInfo(UserPtr head, char *username)
+void ShowUserInfo(UserPtr head, int user_id)
 {
     screen_clear();
     UserPtr pshow = head;
-    while (pshow != NULL && strcmp(pshow->Username, username) != 0)
+    while (pshow != NULL && pshow->id != user_id)
         pshow = pshow->next;  // 查找对应的用户
-    printf("欢迎您，%s\n", username);
+    printf("欢迎您，用户%d\n", user_id);
     if (pshow->borrowed_account == 0)
         printf("您没有借阅书籍\n");
     else
@@ -383,19 +368,19 @@ void ShowUserInfo(UserPtr head, char *username)
         printf("\n");
     }
 }  // 用户个人信息
-void ModifyUserInfo(UserPtr head, char *username)
+void ModifyUserInfo(UserPtr head, int user_id)
 {
     screen_clear();
     UserPtr p = head;
-    while (p != NULL && strcmp(p->Username, username) != 0)
+    while (p != NULL && p->id != user_id)
         p = p->next;  // 查找对应的用户
-    printf("欢迎您，%s\n", username);
+    printf("欢迎您，用户%d\n", user_id);
     printf("请输入新的密码：");
     scanf("%s", p->password);
     printf("修改成功！\n");
 }
 
-void BorrowBook(BookPtr book_head, UserPtr user_head, char *username)
+void BorrowBook(BookPtr book_head, UserPtr user_head, int user_id)
 {
     screen_clear();
 
@@ -407,7 +392,7 @@ void BorrowBook(BookPtr book_head, UserPtr user_head, char *username)
     // 查找书籍和用户
     BookPtr pbook = book_head;
     UserPtr puser = user_head;
-    while (puser != NULL && strcmp(puser->Username, username) != 0)
+    while (puser != NULL && puser->id != user_id)
         puser = puser->next;
     while (pbook != NULL && strcmp(pbook->ISBN, borrowISBN) != 0)
         pbook = pbook->next;
@@ -428,11 +413,11 @@ void BorrowBook(BookPtr book_head, UserPtr user_head, char *username)
         printf("借阅成功！剩余库存：%d\n", pbook->stock);
     }
 }
-void ReturnBook(BookPtr book_head, UserPtr user_head, char *username)
+void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
 {
     screen_clear();
 
-    ShowUserInfo(user_head, username);
+    ShowUserInfo(user_head, user_id);
     char returnISBN[200];
     printf("输入要归还的ISBN: ");
     scanf("%s", returnISBN);
@@ -440,7 +425,7 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, char *username)
     // 查找书籍和用户
     BookPtr pbook = book_head;
     UserPtr puser = user_head;
-    while (puser != NULL && strcmp(puser->Username, username) != 0)
+    while (puser != NULL && puser->id != user_id)
         puser = puser->next;
     while (pbook != NULL && strcmp(pbook->ISBN, returnISBN) != 0)
         pbook = pbook->next;
@@ -458,19 +443,26 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, char *username)
     }
 }
 
-UserPtr read_users_from_file(const char *filename)  // 尾插法，最后传回头节点
+UserPtr read_users_from_file(const char *filename,
+                             int *current_id)  // 尾插法，最后传回头节点
 {
     FILE *file = fopen(filename, "r");
 
     UserPtr head = NULL, tail = NULL;
     UserPtr p;
+    if (fscanf(file, "%d", current_id) != 1)
+    {
+        *current_id = 1000;  // 如果文件为空，初始化ID为1000
+        return head;
+    }
+
     while (!feof(file))
     {
         p = (UserPtr)malloc(sizeof(User));
         p->next = NULL;
         // 基础字段解析
-        if (fscanf(file, "%s %s %s %s %s %d", p->Username, p->Sex, p->Old,
-                   p->Tel, p->password, &p->borrowed_account) != 6)
+        if (fscanf(file, "%d %s %s %s %s %s %d", &p->id, p->Username, p->Sex,
+                   p->Old, p->Tel, p->password, &p->borrowed_account) != 7)
         {
             free(p);
             break;
@@ -524,15 +516,18 @@ BookPtr read_books_from_file(const char *filename)
     return head;
 }  // 读取书籍信息
 
-void write_users_to_file(const char *filename, UserPtr head)
+void write_users_to_file(const char *filename, UserPtr head, int id)
 {
     FILE *file = fopen(filename, "w");
+    // 写入最新的用户ID
+    fprintf(file, "%d\n", id);
+
     UserPtr p = head;
     while (p != NULL)
     {
         // 基础信息写入
-        fprintf(file, "%s %s %s %s %s %d\n", p->Username, p->Sex, p->Old,
-                p->Tel, p->password, p->borrowed_account);
+        fprintf(file, "%d %s %s %s %s %s %d\n", p->id, p->Username, p->Sex,
+                p->Old, p->Tel, p->password, p->borrowed_account);
         // 借阅信息写入
         for (int i = 0; i < p->borrowed_account; i++)
         {
@@ -561,7 +556,8 @@ int main()
 {
     int ChoiceMainMenu, ChoiceSubMenu, continueOperation;
     int *current_id = (int *)malloc(sizeof(int));
-    UserPtr userList = read_users_from_file("user.txt");  // 读取用户表
+    UserPtr userList =
+        read_users_from_file("user.txt", current_id);     // 读取用户表
     BookPtr bookList = read_books_from_file("book.txt");  // 读取书籍表
 
     while ((ChoiceMainMenu = HomeMenu()))
@@ -569,7 +565,14 @@ int main()
         if (ChoiceMainMenu == 3)
         {  // 主菜单序号3跳转注册模块
             printf("\t欢迎注册本软件\n");
-            userList = addUser(userList);
+            userList = addUser(userList, current_id);
+            printf("注册成功！您的登陆ID为：%d\n", *current_id - 1);
+            char nextStep = '1';
+            while (nextStep != 'y')
+            {
+                printf("记住后请输入y：");
+                scanf(" %c", &nextStep);
+            }
         }
         else if (ChoiceMainMenu == 4)
         {
@@ -577,9 +580,8 @@ int main()
         }
         else  // 登陆模块
         {
-            char *username =
-                (char *)malloc(200 * sizeof(char));     // 初始化用户名
-            Login(ChoiceMainMenu, userList, username);  // 先进行身份验证
+            int *user_id = (int *)malloc(sizeof(int));  // 接收用户当前id
+            Login(ChoiceMainMenu, userList, user_id);   // 先进行身份验证
 
             if (ChoiceMainMenu == 1)
             {  // 菜单二序号1管理员登录
@@ -608,7 +610,7 @@ int main()
                         default:
                             break;
                     }
-                    printf("是否继续显示菜单(1确定 0退出)：");
+                    printf("继续在当前菜单中进行选择(1确定 0退出)：");
                     scanf("%d", &continueOperation);
                     if (continueOperation == 1)
                     {
@@ -631,30 +633,30 @@ int main()
                             Showbook(bookList);  // 列出书籍信息
                             break;
                         case 2:
-                            ShowUserInfo(userList, username);
+                            ShowUserInfo(userList, *user_id);
                             printf("是否要修改密码？(1确定 0退出)：");
                             scanf("%d", &continueOperation);
                             if (continueOperation == 1)
                             {
-                                ModifyUserInfo(userList, username);
+                                ModifyUserInfo(userList, *user_id);
                             }
                             break;
                         case 3:
-                            BorrowBook(bookList, userList, username);
+                            BorrowBook(bookList, userList, *user_id);
                             break;
                         case 4:
-                            ReturnBook(bookList, userList, username);
+                            ReturnBook(bookList, userList, *user_id);
                             break;
                         default:
                             break;
                     }
-                    printf("继续进入菜单(1确定 0退出)：");
+                    printf("要退出登陆吗？(1确定 0取消)：");
                     scanf("%d", &continueOperation);
-                    if (continueOperation == 1)
+                    if (continueOperation == 0)
                     {
                         ChoiceSubMenu = UserMenu();
                     }
-                    else if (continueOperation == 0)
+                    else if (continueOperation == 1)
                     {
                         break;
                     }
@@ -667,7 +669,7 @@ int main()
         }
     }
     // 将数据写入文件
-    write_users_to_file("user.txt", userList);
+    write_users_to_file("user.txt", userList, *current_id);
     write_books_to_file("book.txt", bookList);
     return 0;
 }
