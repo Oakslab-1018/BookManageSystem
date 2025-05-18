@@ -478,6 +478,34 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
         // 更新数据
         pbook->stock++;
         puser->borrowed_account--;
+
+        int i = 0, j = 0;
+        // 先清除user借阅的book
+        while (strcmp(book, puser->borrowed_book[i]) != 0)
+            i++;
+
+        // 将该位置之后的所有书籍名称向前移动一位
+        for (j = i; j < puser->borrowed_account; j++)
+        {
+            strcpy(puser->borrowed_book[j], puser->borrowed_book[j + 1]);
+        }
+
+        // 清空最后一个位置
+        strcpy(puser->borrowed_book[puser->borrowed_account - 1], "");
+
+        // 再清除book记录的借阅者
+        i = j = 0;
+        while (strcmp(puser->Username, pbook->lent_user[i]) != 0)
+            i++;
+        // 将该位置之后的所有书籍名称向前移动一位
+        for (j = i; j < pbook->lent_account; j++)
+        {
+            strcpy(pbook->lent_user[j], pbook->lent_user[j + 1]);
+        }
+
+        // 清空最后一个位置
+        strcpy(pbook->lent_user[pbook->lent_account - 1], "");
+
         printf("归还成功！剩余库存：%d\n", pbook->stock);
     }
 }
