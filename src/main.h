@@ -1,3 +1,4 @@
+// #include <time.h>
 #define ADMIN "admin"
 #define ADMINPASS "123"
 typedef struct user
@@ -26,6 +27,15 @@ typedef struct book
     struct book *next;
 } *BookPtr, Book;  // 书籍链表
 
+// typedef struct {
+//     int userID;          // 用户ID
+//     int bookID;          // 图书ID
+//     time_t borrowDate;   // 借书日期
+//     time_t dueDate;      // 应还日期
+//     time_t returnDate;   // 实际归还日期（0表示未归还）
+//     float penaltyFee;    // 罚金金额
+//     int isPaid;         // 是否已缴纳罚金
+// } BorrowRecord;
 
 // 菜单函数
 void screen_clear();//清屏函数

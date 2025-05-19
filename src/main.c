@@ -322,26 +322,54 @@ void searchBook(BookPtr head)
     screen_clear();
 
     char keyword[100];
+    int choice;
     int flag = 0;
+
+    printf("请选择：1.按书名查找 2.按作者查找 3.按出版社查找\n");
+    scanf("%d", &choice);
+    if (choice != 1 && choice != 2 && choice != 3)
+    {
+        printf("无效输入！");
+        return;
+    }
     printf("请输入搜索关键词：");
     scanf("%s", keyword);
     BookPtr p = head;
     while (p)
     {
-        if ((strstr(p->BookName, keyword)))
+        if (choice == 1)
         {
-            flag = 1;
-            printf("\n%s", p->BookName);
+            if ((strstr(p->BookName, keyword)))
+            {
+                flag = 1;
+                printf("\n%s", p->BookName);
+            }
+        }
+        else if (choice == 2)
+        {
+            if ((strstr(p->Writer, keyword)))
+            {
+                flag = 1;
+                printf("\n%s  作者：%s", p->BookName, p->Writer);
+            }
+        }
+        else if (choice == 3)
+        {
+            if ((strstr(p->Press, keyword)))
+            {
+                flag = 1;
+                printf("\n%s  出版社：%s", p->BookName, p->Press);
+            }
         }
         p = p->next;
     }
     if (flag == 0)
     {
-        printf("\n未找到书籍！\n");
+        printf("\n未找到对应的书籍！\n");
     }
     else
     {
-        printf("\n查找完毕！\n");
+        printf("\n\n查找完毕！\n");
     }
 }
 
