@@ -37,6 +37,7 @@ void Showbook(BookPtr head);  // 显示所有书籍信息
 void ShowBookInfo(BookPtr head);//显示单本书借阅信息
 void Showuser(UserPtr head);//显示所有用户信息
 void addBook(BookPtr head);//添加书籍信息
+void searchBook(BookPtr head);//搜索函数
 BookPtr Delbook(BookPtr head);  // 删除书籍信息，返回新的链表头替换原链表头
 void ModifyBook(BookPtr head);//修改书籍信息
 // 用户函数

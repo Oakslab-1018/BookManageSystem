@@ -36,7 +36,7 @@ int AdminMenu()
     printf("\t-------------\n");
     printf(
         "1.查看所有图书 2.添加图书 3.注销图书 4.修改图书 5.管理用户 "
-        "6.图书查询7.返回主菜单\n");
+        "6.查找图书 7.返回主菜单\n");
     printf("请选择：");
     scanf("%d", &n);
     return n;
@@ -49,7 +49,9 @@ int UserMenu()
     printf("\t\t----------------\n");
     printf("\t\t    欢迎用户\n");
     printf("\t\t----------------\n");
-    printf("1.显示所有图书 2.个人管理 3.借阅图书 4.归还图书 5.返回主菜单\n");
+    printf(
+        "1.显示所有图书 2.查找图书 3.个人管理 4.借阅图书 5.归还图书 "
+        "6.返回主菜单\n");
     printf("请选择：\n");
     scanf("%d", &n);
     return n;
@@ -315,6 +317,33 @@ void addBook(BookPtr head)
     p->next = pnew;
     printf("添加成功\n");
 }  // 添加书籍模块
+void searchBook(BookPtr head)
+{
+    screen_clear();
+
+    char keyword[100];
+    int flag = 0;
+    printf("请输入搜索关键词：");
+    scanf("%s", keyword);
+    BookPtr p = head;
+    while (p)
+    {
+        if ((strstr(p->BookName, keyword)))
+        {
+            flag = 1;
+            printf("\n%s", p->BookName);
+        }
+        p = p->next;
+    }
+    if (flag == 0)
+    {
+        printf("\n未找到书籍！\n");
+    }
+    else
+    {
+        printf("\n查找完毕！\n");
+    }
+}
 
 BookPtr Delbook(BookPtr head)
 {
@@ -470,9 +499,9 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
         pbook = pbook->next;
     // 验证逻辑
     if (!pbook || !puser)
-        printf("未找到书籍或用户\n");
+        printf("无对应的借阅记录\n");
     else if (puser->borrowed_account <= 0)
-        printf("没有借阅记录\n");
+        printf("当前未借阅书籍\n");
     else
     {
         // 更新数据
@@ -682,6 +711,7 @@ int main()
                             Showuser(userList);  // 列出用户信息
                             break;
                         case 6:
+                            searchBook(bookList);
                             break;
                         default:
                             break;
@@ -709,6 +739,9 @@ int main()
                             Showbook(bookList);  // 列出书籍信息
                             break;
                         case 2:
+                            searchBook(bookList);
+                            break;
+                        case 3:
                             ShowUserInfo(userList, *user_id);
                             printf("是否要修改密码？(1确定 0退出)：");
                             scanf("%d", &continueOperation);
@@ -717,10 +750,10 @@ int main()
                                 ModifyUserInfo(userList, *user_id);
                             }
                             break;
-                        case 3:
+                        case 4:
                             BorrowBook(bookList, userList, *user_id);
                             break;
-                        case 4:
+                        case 5:
                             ReturnBook(bookList, userList, *user_id);
                             break;
                         default:
