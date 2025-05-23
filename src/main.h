@@ -1,4 +1,4 @@
-// #include <time.h>
+#include <time.h>
 #define ADMIN "admin"
 #define ADMINPASS "123"
 typedef struct user
@@ -27,15 +27,16 @@ typedef struct book
     struct book *next;
 } *BookPtr, Book;  // 书籍链表
 
-// typedef struct {
-//     int userID;          // 用户ID
-//     int bookID;          // 图书ID
-//     time_t borrowDate;   // 借书日期
-//     time_t dueDate;      // 应还日期
-//     time_t returnDate;   // 实际归还日期（0表示未归还）
-//     float penaltyFee;    // 罚金金额
-//     int isPaid;         // 是否已缴纳罚金
-// } BorrowRecord;
+typedef struct record {
+    int userID;          // 用户ID
+    char bookName[200];          // 图书名
+    time_t borrowDate;   // 借书日期
+    time_t dueDate;      // 应还日期
+    time_t returnDate;   // 实际归还日期（0表示未归还）
+    float penaltyFee;    // 罚金金额
+    int isPaid;          // 是否已缴纳罚金
+    struct record *next;
+}*RecordPtr,Record;
 
 // 菜单函数
 void screen_clear();//清屏函数
@@ -46,14 +47,18 @@ int UserMenu();  // 用户菜单
 void Showbook(BookPtr head);  // 显示所有书籍信息
 void ShowBookInfo(BookPtr head);//显示单本书借阅信息
 void Showuser(UserPtr head);//显示所有用户信息
-void addBook(BookPtr head);//添加书籍信息
+void Show_overdue_user(RecordPtr head);
+BookPtr addBook(BookPtr head);//添加书籍信息
 void searchBook(BookPtr head);//搜索函数
 BookPtr Delbook(BookPtr head);  // 删除书籍信息，返回新的链表头替换原链表头
 void ModifyBook(BookPtr head);//修改书籍信息
 // 用户函数
-void ShowUserInfo(UserPtr head, int user_id);//显示个人信息
-void BorrowBook(BookPtr book_head, UserPtr user_head, int user_id);//借书函数
+void ShowUserInfo(UserPtr head, int user_id);  // 显示个人信息
+RecordPtr addRecord(RecordPtr record_head, char *bookname,int user_id);  // 添加借阅记录
+RecordPtr BorrowBook(BookPtr book_head, UserPtr user_head,RecordPtr record_head, int user_id);//借书函数
 void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id);  // 还书函数
+float needPay(time_t borrowDate,time_t dueDate,time_t returnDate);//计算罚金
+void PayFee(RecordPtr head,UserPtr userList, BookPtr bookList,int user_id,int fee);//缴纳罚金
 void ModifyUserInfo(UserPtr head,int user_id);//修改个人信息
 // 注册和登陆校验
 UserPtr addUser(UserPtr head,int *current_id);  // 注册用户
@@ -64,4 +69,5 @@ UserPtr read_users_from_file(const char *filename,int *current_id);  // 读取�
 BookPtr read_books_from_file(const char *filename);  // 读取书籍信息
 void write_users_to_file(const char* filename, UserPtr head,int id); // 写入用户信息
 void write_books_to_file(const char *filename, BookPtr head);  // 写入书籍信息
-
+RecordPtr read_records_from_file(const char *filename);
+void write_records_from_file(const char *filename,RecordPtr head);

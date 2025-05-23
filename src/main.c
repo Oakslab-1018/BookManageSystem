@@ -1,9 +1,10 @@
+#include <time.h>
 #define _CRT_SECURE_NO_WARNINGS 1
-#include "main.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "main.h"
 
 void screen_clear()
 {
@@ -118,12 +119,6 @@ UserPtr addUser(UserPtr head, int *current_id)
 {
     screen_clear();
 
-    UserPtr p = head;
-    while (p != NULL && p->next != NULL)
-    {
-        p = p->next;
-    }  // 找到user链表最后一个节点
-
     UserPtr pnew = (UserPtr)malloc(sizeof(User));
     pnew->next = NULL;
 
@@ -152,13 +147,20 @@ UserPtr addUser(UserPtr head, int *current_id)
 
     pnew->borrowed_account = 0;  // 初始化借阅数量为0
 
-    if (p == NULL)  // 若链表为空
+    if (!head)  // 若链表为空
     {
         return pnew;
     }
-    // 尾插接入user链表
-    p->next = pnew;
-
+    else
+    {
+        UserPtr p = head;
+        while (p != NULL && p->next != NULL)
+        {
+            p = p->next;
+        }  // 找到user链表最后一个节点
+           // 尾插接入user链表
+        p->next = pnew;
+    }
     return head;
 }  // 用户注册模块
 
@@ -202,15 +204,6 @@ void Showbook(BookPtr head)
             pshow = pshow->next;
         }
         free(tmp);  // 释放临时结点
-
-        printf("\n是否查看单本书籍借阅信息？(y键确定,其他键退出)：");
-        char op;
-        getchar();  // 清除换行符
-        scanf("%c", &op);
-        if (op == 'y')
-        {
-            ShowBookInfo(head);
-        }
     }
     printf("\n查看完成\n");
 }
@@ -246,7 +239,7 @@ void Showuser(UserPtr head)
 {
     screen_clear();
 
-    if (head == NULL)
+    if (!head)
         printf("\t*暂无普通用户信息*\n");
     else
     {
@@ -282,18 +275,42 @@ void Showuser(UserPtr head)
     }
     printf("\t查看完成\n");
 }  // 打印用户模块
-
-void addBook(BookPtr head)
+void Show_overdue_user(RecordPtr head)
 {
     screen_clear();
 
-    BookPtr p = head;
-    while (p->next != NULL)
+    if (!head)
     {
+        printf("暂无逾期未缴纳费用的用户\n");
+        return;
+    }
+    RecordPtr p = head;
+    time_t nowtime = time(NULL);
+    int flag = 0;
+    while (p)
+    {
+        p->penaltyFee = needPay(p->borrowDate, p->dueDate, 0);
+        if (p->penaltyFee != 0 && p->isPaid == 0)
+        {
+            flag = 1;
+            printf("用户ID：%d ,借阅书籍：%s ,需要缴纳罚金：%.2f\n", p->userID,
+                   p->bookName, p->penaltyFee);
+        }
         p = p->next;
-    }  // 找到book链表最后一个节点
+    }
+    if (flag == 0)
+    {
+        printf("暂无逾期未缴纳费用的用户\n");
+    }
+}
+
+BookPtr addBook(BookPtr head)
+{
+    screen_clear();
 
     BookPtr pnew = (BookPtr)malloc(sizeof(Book));
+    pnew->next = NULL;
+
     printf("请输入书编号：");
     scanf("%s", pnew->ISBN);
     getchar();
@@ -313,9 +330,21 @@ void addBook(BookPtr head)
     pnew->total = stock;  // 初始化库存和总数
     getchar();
 
-    pnew->next = p->next;
-    p->next = pnew;
+    if (!head)
+    {
+        head = pnew;
+    }
+    else
+    {
+        BookPtr p = head;
+        while (p->next != NULL)
+        {
+            p = p->next;
+        }  // 找到book链表最后一个节点
+        p->next = pnew;
+    }
     printf("添加成功\n");
+    return head;
 }  // 添加书籍模块
 void searchBook(BookPtr head)
 {
@@ -473,7 +502,39 @@ void ModifyUserInfo(UserPtr head, int user_id)
     printf("修改成功！\n");
 }
 
-void BorrowBook(BookPtr book_head, UserPtr user_head, int user_id)
+RecordPtr addRecord(RecordPtr record_head, char *bookname, int user_id)
+{
+    screen_clear();
+
+    RecordPtr pnew = (RecordPtr)malloc(sizeof(Record));
+    pnew->next = NULL;
+
+    pnew->userID = user_id;
+    strcpy(pnew->bookName, bookname);
+    time_t nowtime = time(NULL);
+    pnew->borrowDate = nowtime;
+    pnew->dueDate = nowtime + 30 * 24 * 60 * 60;
+    pnew->returnDate = 0;
+    pnew->isPaid = 0;
+
+    if (!record_head)
+    {
+        record_head = pnew;
+    }
+    else
+    {
+        RecordPtr p = record_head;
+        while (p->next != NULL)
+        {
+            p = p->next;
+        }  // 找到record链表最后一个节点
+        p->next = pnew;
+    }
+    return record_head;
+}  // 添加借阅记录
+
+RecordPtr BorrowBook(BookPtr book_head, UserPtr user_head,
+                     RecordPtr record_head, int user_id)
 {
     screen_clear();
 
@@ -481,7 +542,7 @@ void BorrowBook(BookPtr book_head, UserPtr user_head, int user_id)
     Showbook(book_head);  // 显示可借书目
     printf("输入要借阅的ISBN: ");
     scanf("%s", borrowISBN);
-
+    RecordPtr recordlist = record_head;
     // 查找书籍和用户
     BookPtr pbook = book_head;
     UserPtr puser = user_head;
@@ -506,8 +567,11 @@ void BorrowBook(BookPtr book_head, UserPtr user_head, int user_id)
         puser->borrowed_account++;
         pbook->stock--;
         pbook->lent_account++;
+
+        recordlist = addRecord(record_head, pbook->BookName, user_id);
         printf("借阅成功！剩余库存：%d\n", pbook->stock);
     }
+    return recordlist;
 }
 void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
 {
@@ -567,6 +631,69 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
     }
 }
 
+float needPay(time_t borrowDate, time_t dueDate, time_t returnDate)
+{
+    float fee = 0.0f;
+    const float RATE_PER_DAY = 0.5f;  // 每日罚金0.5元
+
+    time_t nowtime = time(NULL);
+    if (returnDate > dueDate)
+    {
+        long long overdue_seconds = returnDate - dueDate;
+        int overdue_days = (overdue_seconds + 24 * 60 * 60 - 1) /
+                           (24 * 60 * 60);  // 向上取整天数
+        fee = overdue_days * RATE_PER_DAY;
+    }
+    else if (nowtime > dueDate && returnDate == 0)
+    {
+        long long overdue_seconds = nowtime - dueDate;
+        int overdue_days = (overdue_seconds + 24 * 60 * 60 - 1) /
+                           (24 * 60 * 60);  // 向上取整天数
+        fee = overdue_days * RATE_PER_DAY;
+    }
+    return fee;
+}  // 计算罚金
+void PayFee(RecordPtr head, UserPtr userList, BookPtr bookList, int user_id,
+            int fee)
+{
+    printf("您好！用户%d:\n", user_id);
+    if (!head)
+    {
+        printf("您没有逾期的书籍记录。");
+        return;
+    }
+    RecordPtr p = head;
+    int flag = 0;
+    while (p)
+    {
+        p->penaltyFee = needPay(p->borrowDate, p->dueDate, 0);
+        if (p->userID == user_id && p->penaltyFee != 0)
+        {
+            flag = 1;
+            printf(
+                "书籍%s已逾期，需要缴纳罚金%.2f元，是否归还书籍并缴纳罚金？("
+                "是：1；否：0)\n",
+                p->bookName, p->penaltyFee);
+            int option;
+            getchar();
+            scanf("%d", &option);
+            if (option == 1)
+            {
+                ReturnBook(bookList, userList, user_id);
+                time_t nowtime = time(NULL);
+                p->returnDate = nowtime;
+                p->penaltyFee = 0;
+            }
+        }
+        p = p->next;
+    }
+    if (flag == 0)
+    {
+        printf("您没有逾期的书籍记录。");
+    }
+}  // 缴纳罚金
+
+/*文件读写部分*/
 UserPtr read_users_from_file(const char *filename,
                              int *current_id)  // 尾插法，最后传回头节点
 {
@@ -612,10 +739,9 @@ BookPtr read_books_from_file(const char *filename)
     FILE *file = fopen(filename, "r");
 
     BookPtr head = NULL, tail = NULL;
-    BookPtr p = (BookPtr)malloc(sizeof(Book));
     while (!feof(file))
     {
-        p = (BookPtr)malloc(sizeof(Book));
+        BookPtr p = (BookPtr)malloc(sizeof(Book));
         p->next = NULL;
         // 基础字段解析
         if (fscanf(file, "%s %s %s %s %d %d %d", p->ISBN, p->BookName,
@@ -685,6 +811,45 @@ void write_books_to_file(const char *filename, BookPtr head)
     fclose(file);
 }  // 写入书籍信息
 
+RecordPtr read_records_from_file(const char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    RecordPtr head = NULL, tail = NULL;
+    while (!feof(file))
+    {
+        RecordPtr p = (RecordPtr)malloc(sizeof(Record));
+        p->next = NULL;
+        if (fscanf(file, "%d %s %lld %lld %lld %f %d", &p->userID, p->bookName,
+                   &p->borrowDate, &p->dueDate, &p->returnDate, &p->penaltyFee,
+                   &p->isPaid) != 7)
+        {
+            free(p);
+            break;
+        }
+
+        // 尾插法构建链表
+        if (!head)
+            head = tail = p;
+        else
+            tail->next = p, tail = p;
+    }
+    fclose(file);
+    return head;
+}
+void write_records_from_file(const char *filename, RecordPtr head)
+{
+    FILE *file = fopen(filename, "w");
+    RecordPtr p = head;
+    while (p)
+    {
+        // 基础信息写入
+        fprintf(file, "%d %s %lld %lld %lld %.2f %d\n", p->userID, p->bookName,
+                p->borrowDate, p->dueDate, p->returnDate, p->penaltyFee,
+                p->isPaid);
+        p = p->next;
+    }
+}
+
 int main()
 {
     int ChoiceMainMenu, ChoiceSubMenu, continueOperation;
@@ -692,7 +857,7 @@ int main()
     UserPtr userList =
         read_users_from_file("user.txt", current_id);     // 读取用户表
     BookPtr bookList = read_books_from_file("book.txt");  // 读取书籍表
-
+    RecordPtr recordList = read_records_from_file("record.txt");
     while ((ChoiceMainMenu = HomeMenu()))
     {
         if (ChoiceMainMenu == 3)
@@ -725,9 +890,19 @@ int main()
                     {
                         case 1:
                             Showbook(bookList);  // 列出书籍信息
+                            printf(
+                                "\n是否查看单本书籍借阅信息？(y键确定,"
+                                "其他键退出)：");
+                            char op;
+                            getchar();  // 清除换行符
+                            scanf("%c", &op);
+                            if (op == 'y')
+                            {
+                                ShowBookInfo(bookList);
+                            }
                             break;
                         case 2:
-                            addBook(bookList);  // 添加书籍信息
+                            bookList = addBook(bookList);  // 添加书籍信息
                             break;
                         case 3:
                             bookList = Delbook(bookList);  // 删除书籍信息
@@ -740,6 +915,8 @@ int main()
                             break;
                         case 6:
                             searchBook(bookList);
+                            break;
+                        case 7:
                             break;
                         default:
                             break;
@@ -779,7 +956,8 @@ int main()
                             }
                             break;
                         case 4:
-                            BorrowBook(bookList, userList, *user_id);
+                            recordList = BorrowBook(bookList, userList,
+                                                    recordList, *user_id);
                             break;
                         case 5:
                             ReturnBook(bookList, userList, *user_id);
@@ -808,5 +986,6 @@ int main()
     // 将数据写入文件
     write_users_to_file("user.txt", userList, *current_id);
     write_books_to_file("book.txt", bookList);
+    write_records_from_file("record.txt", recordList);
     return 0;
 }
