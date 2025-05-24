@@ -46,7 +46,7 @@ int UserMenu();  // 用户菜单
 //管理员函数
 void Showbook(BookPtr head);  // 显示所有书籍信息
 void ShowBookInfo(BookPtr head);//显示单本书借阅信息
-void Showuser(UserPtr head);//显示所有用户信息
+void Showuser(UserPtr user_head, RecordPtr record_head);//显示所有用户信息
 void Show_overdue_user(RecordPtr head);
 BookPtr addBook(BookPtr head);//添加书籍信息
 void searchBook(BookPtr head);//搜索函数
@@ -58,7 +58,7 @@ RecordPtr addRecord(RecordPtr record_head, char *bookname,int user_id);  // 添�
 RecordPtr BorrowBook(BookPtr book_head, UserPtr user_head,RecordPtr record_head, int user_id);//借书函数
 void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id);  // 还书函数
 float needPay(time_t borrowDate,time_t dueDate,time_t returnDate);//计算罚金
-void PayFee(RecordPtr head,UserPtr userList, BookPtr bookList,int user_id,int fee);//缴纳罚金
+void PayFee(RecordPtr head,UserPtr userList, BookPtr bookList,int user_id);//缴纳罚金
 void ModifyUserInfo(UserPtr head,int user_id);//修改个人信息
 // 注册和登陆校验
 UserPtr addUser(UserPtr head,int *current_id);  // 注册用户

@@ -51,8 +51,8 @@ int UserMenu()
     printf("\t\t    欢迎用户\n");
     printf("\t\t----------------\n");
     printf(
-        "1.显示所有图书 2.查找图书 3.个人管理 4.借阅图书 5.归还图书 "
-        "6.返回主菜单\n");
+        "1.显示所有图书 2.查找图书 3.个人管理 4.借阅图书 5.归还图书 6.缴纳罚金"
+        "7.返回主菜单\n");
     printf("请选择：\n");
     scanf("%d", &n);
     return n;
@@ -235,18 +235,35 @@ void ShowBookInfo(BookPtr head)
     }
 }  // 显示单本书信息
 
-void Showuser(UserPtr head)
+void Showuser(UserPtr user_head, RecordPtr record_head)
 {
     screen_clear();
 
-    if (!head)
+    char option = 'w';
+    while (1)
+    {
+        printf("请选择：a.查看所有用户  b.查看逾期未缴费用户\n");
+        getchar();
+        scanf("%c", &option);
+        if (option == 'a')
+        {
+            break;
+        }
+        else if (option == 'b')
+        {
+            Show_overdue_user(record_head);
+            return;
+        }
+    }
+
+    if (!user_head)
         printf("\t*暂无普通用户信息*\n");
     else
     {
         printf("遍历结果为:\n");
         UserPtr pshow = (UserPtr)malloc(sizeof(User));
         UserPtr tmp = pshow;  // 记录这个临时结点
-        pshow->next = head;
+        pshow->next = user_head;
         printf(
             "\t----------------------------------------------------------------"
             "-----"
@@ -285,7 +302,6 @@ void Show_overdue_user(RecordPtr head)
         return;
     }
     RecordPtr p = head;
-    time_t nowtime = time(NULL);
     int flag = 0;
     while (p)
     {
@@ -598,6 +614,7 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
     {
         // 更新数据
         pbook->stock++;
+        pbook->lent_account--;
         puser->borrowed_account--;
 
         int i = 0, j = 0;
@@ -653,8 +670,7 @@ float needPay(time_t borrowDate, time_t dueDate, time_t returnDate)
     }
     return fee;
 }  // 计算罚金
-void PayFee(RecordPtr head, UserPtr userList, BookPtr bookList, int user_id,
-            int fee)
+void PayFee(RecordPtr head, UserPtr userList, BookPtr bookList, int user_id)
 {
     printf("您好！用户%d:\n", user_id);
     if (!head)
@@ -852,12 +868,13 @@ void write_records_from_file(const char *filename, RecordPtr head)
 
 int main()
 {
-    int ChoiceMainMenu, ChoiceSubMenu, continueOperation;
+    int ChoiceMainMenu, ChoiceSubMenu, ChoiceContinue;
     int *current_id = (int *)malloc(sizeof(int));
     UserPtr userList =
         read_users_from_file("user.txt", current_id);     // 读取用户表
     BookPtr bookList = read_books_from_file("book.txt");  // 读取书籍表
     RecordPtr recordList = read_records_from_file("record.txt");
+
     while ((ChoiceMainMenu = HomeMenu()))
     {
         if (ChoiceMainMenu == 3)
@@ -894,7 +911,7 @@ int main()
                                 "\n是否查看单本书籍借阅信息？(y键确定,"
                                 "其他键退出)：");
                             char op;
-                            getchar();  // 清除换行符
+                            getchar();
                             scanf("%c", &op);
                             if (op == 'y')
                             {
@@ -911,7 +928,7 @@ int main()
                             ModifyBook(bookList);
                             break;
                         case 5:
-                            Showuser(userList);  // 列出用户信息
+                            Showuser(userList, recordList);  // 列出用户信息
                             break;
                         case 6:
                             searchBook(bookList);
@@ -922,12 +939,12 @@ int main()
                             break;
                     }
                     printf("继续在当前菜单中进行选择(1确定 0退出)：");
-                    scanf("%d", &continueOperation);
-                    if (continueOperation == 1)
+                    scanf("%d", &ChoiceContinue);
+                    if (ChoiceContinue == 1)
                     {
                         ChoiceSubMenu = AdminMenu();
                     }
-                    else if (continueOperation == 0)
+                    else if (ChoiceContinue == 0)
                     {
                         break;
                     }
@@ -948,9 +965,9 @@ int main()
                             break;
                         case 3:
                             ShowUserInfo(userList, *user_id);
-                            printf("是否要修改密码？(1确定 0退出)：");
-                            scanf("%d", &continueOperation);
-                            if (continueOperation == 1)
+                            printf("是否要修改密码？(1确定 0返回上一级)：");
+                            scanf("%d", &ChoiceContinue);
+                            if (ChoiceContinue == 1)
                             {
                                 ModifyUserInfo(userList, *user_id);
                             }
@@ -962,16 +979,19 @@ int main()
                         case 5:
                             ReturnBook(bookList, userList, *user_id);
                             break;
+                        case 6:
+                            PayFee(recordList, userList, bookList, *user_id);
+                            break;
                         default:
                             break;
                     }
                     printf("要退出登陆吗？(1确定 0取消)：");
-                    scanf("%d", &continueOperation);
-                    if (continueOperation == 0)
+                    scanf("%d", &ChoiceContinue);
+                    if (ChoiceContinue == 0)
                     {
                         ChoiceSubMenu = UserMenu();
                     }
-                    else if (continueOperation == 1)
+                    else if (ChoiceContinue == 1)
                     {
                         break;
                     }
