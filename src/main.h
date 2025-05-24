@@ -57,7 +57,7 @@ void ShowUserInfo(UserPtr head, int user_id);  // 显示个人信息
 RecordPtr addRecord(RecordPtr record_head, char *bookname,int user_id);  // 添加借阅记录
 RecordPtr BorrowBook(BookPtr book_head, UserPtr user_head,RecordPtr record_head, int user_id);//借书函数
 void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id);  // 还书函数
-float needPay(time_t borrowDate,time_t dueDate,time_t returnDate);//计算罚金
+float needPay(time_t dueDate,time_t returnDate);//计算罚金
 void PayFee(RecordPtr head,UserPtr userList, BookPtr bookList,int user_id);//缴纳罚金
 void ModifyUserInfo(UserPtr head,int user_id);//修改个人信息
 // 注册和登陆校验

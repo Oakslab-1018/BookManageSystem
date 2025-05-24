@@ -51,8 +51,8 @@ int UserMenu()
     printf("\t\t    欢迎用户\n");
     printf("\t\t----------------\n");
     printf(
-        "1.显示所有图书 2.查找图书 3.个人管理 4.借阅图书 5.归还图书 6.缴纳罚金"
-        "7.返回主菜单\n");
+        "1.个人管理 2.借阅图书 3.查找图书 4.归还图书 5.缴纳罚金"
+        "6.返回主菜单\n");
     printf("请选择：\n");
     scanf("%d", &n);
     return n;
@@ -305,7 +305,7 @@ void Show_overdue_user(RecordPtr head)
     int flag = 0;
     while (p)
     {
-        p->penaltyFee = needPay(p->borrowDate, p->dueDate, 0);
+        p->penaltyFee = needPay(p->dueDate, p->returnDate);
         if (p->penaltyFee != 0 && p->isPaid == 0)
         {
             flag = 1;
@@ -648,7 +648,7 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
     }
 }
 
-float needPay(time_t borrowDate, time_t dueDate, time_t returnDate)
+float needPay(time_t dueDate, time_t returnDate)
 {
     float fee = 0.0f;
     const float RATE_PER_DAY = 0.5f;  // 每日罚金0.5元
@@ -682,8 +682,8 @@ void PayFee(RecordPtr head, UserPtr userList, BookPtr bookList, int user_id)
     int flag = 0;
     while (p)
     {
-        p->penaltyFee = needPay(p->borrowDate, p->dueDate, 0);
-        if (p->userID == user_id && p->penaltyFee != 0)
+        p->penaltyFee = needPay(p->dueDate, p->returnDate);
+        if (p->userID == user_id && p->penaltyFee != 0 && p->isPaid == 0)
         {
             flag = 1;
             printf(
@@ -698,7 +698,7 @@ void PayFee(RecordPtr head, UserPtr userList, BookPtr bookList, int user_id)
                 ReturnBook(bookList, userList, user_id);
                 time_t nowtime = time(NULL);
                 p->returnDate = nowtime;
-                p->penaltyFee = 0;
+                p->isPaid = 1;
             }
         }
         p = p->next;
@@ -938,7 +938,7 @@ int main()
                         default:
                             break;
                     }
-                    printf("继续在当前菜单中进行选择(1确定 0退出)：");
+                    printf("\n继续在当前菜单中进行选择(1确定 0退出)：");
                     scanf("%d", &ChoiceContinue);
                     if (ChoiceContinue == 1)
                     {
@@ -958,12 +958,6 @@ int main()
                     switch (ChoiceSubMenu)
                     {
                         case 1:
-                            Showbook(bookList);  // 列出书籍信息
-                            break;
-                        case 2:
-                            searchBook(bookList);
-                            break;
-                        case 3:
                             ShowUserInfo(userList, *user_id);
                             printf("是否要修改密码？(1确定 0返回上一级)：");
                             scanf("%d", &ChoiceContinue);
@@ -972,14 +966,17 @@ int main()
                                 ModifyUserInfo(userList, *user_id);
                             }
                             break;
-                        case 4:
+                        case 2:
                             recordList = BorrowBook(bookList, userList,
                                                     recordList, *user_id);
                             break;
-                        case 5:
+                        case 3:
+                            searchBook(bookList);
+                            break;
+                        case 4:
                             ReturnBook(bookList, userList, *user_id);
                             break;
-                        case 6:
+                        case 5:
                             PayFee(recordList, userList, bookList, *user_id);
                             break;
                         default:
