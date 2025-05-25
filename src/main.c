@@ -658,11 +658,6 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, RecordPtr record_head,
         printf("当前未借阅书籍\n");
     else
     {
-        // 更新数据
-        pbook->stock++;
-        pbook->lent_account--;
-        puser->borrowed_account--;
-
         while (precord)
         {
             if (strcmp(precord->bookName, pbook->BookName) == 0 &&
@@ -700,6 +695,11 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, RecordPtr record_head,
             strcpy(pbook->lent_user[j], pbook->lent_user[j + 1]);
 
         pbook->lent_user[j][0] = '\0';  // 清空最后一项
+
+        // 更新数据
+        pbook->stock++;
+        pbook->lent_account--;
+        puser->borrowed_account--;
 
         printf("归还成功！剩余库存：%d\n", pbook->stock);
     }
