@@ -683,31 +683,23 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, RecordPtr record_head,
         precord->returnDate = nowtime;
 
         int i = 0, j = 0;
-        // 先清除user借阅的book
-        while (strcmp(book, puser->borrowed_book[i]) != 0)
-            i++;
+        // 从用户借阅列表中移除书籍
+        for (i = 0; strcmp(book, puser->borrowed_book[i]) != 0; i++)
+            ;  // 找到目标位置
 
-        // 将该位置之后的所有书籍名称向前移动一位
-        for (j = i; j < puser->borrowed_account; j++)
-        {
+        for (j = i; j < puser->borrowed_account - 1; j++)  // 前移后续元素
             strcpy(puser->borrowed_book[j], puser->borrowed_book[j + 1]);
-        }
 
-        // 清空最后一个位置
-        strcpy(puser->borrowed_book[puser->borrowed_account - 1], "");
+        puser->borrowed_book[j][0] = '\0';  // 清空最后一项
 
-        // 再清除book记录的借阅者
-        i = j = 0;
-        while (strcmp(puser->Username, pbook->lent_user[i]) != 0)
-            i++;
-        // 将该位置之后的所有书籍名称向前移动一位
-        for (j = i; j < pbook->lent_account; j++)
-        {
+        // 从图书借阅者列表中移除用户
+        for (i = 0; strcmp(puser->Username, pbook->lent_user[i]) != 0; i++)
+            ;
+
+        for (j = i; j < pbook->lent_account - 1; j++)  // 前移后续元素
             strcpy(pbook->lent_user[j], pbook->lent_user[j + 1]);
-        }
 
-        // 清空最后一个位置
-        strcpy(pbook->lent_user[pbook->lent_account - 1], "");
+        pbook->lent_user[j][0] = '\0';  // 清空最后一项
 
         printf("归还成功！剩余库存：%d\n", pbook->stock);
     }
