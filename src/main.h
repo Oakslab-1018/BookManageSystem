@@ -72,4 +72,4 @@ BookPtr read_books_from_file(const char *filename);  // 读取书籍信息
 void write_users_to_file(const char* filename, UserPtr head,int id); // 写入用户信息
 void write_books_to_file(const char *filename, BookPtr head);  // 写入书籍信息
 RecordPtr read_records_from_file(const char *filename);
-void write_records_from_file(const char *filename,RecordPtr head);
+void write_records_to_file(const char *filename,RecordPtr head);

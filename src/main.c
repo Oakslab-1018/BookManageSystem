@@ -917,7 +917,7 @@ RecordPtr read_records_from_file(const char *filename)
     fclose(file);
     return head;
 }
-void write_records_from_file(const char *filename, RecordPtr head)
+void write_records_to_file(const char *filename, RecordPtr head)
 {
     FILE *file = fopen(filename, "w");
     RecordPtr p = head;
@@ -1070,6 +1070,6 @@ int main()
     // 将数据写入文件
     write_users_to_file("user.txt", userList, *current_id);
     write_books_to_file("book.txt", bookList);
-    write_records_from_file("record.txt", recordList);
+    write_records_to_file("record.txt", recordList);
     return 0;
 }
