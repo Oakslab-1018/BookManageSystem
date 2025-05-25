@@ -51,7 +51,7 @@ int UserMenu()
     printf("\t\t    欢迎用户\n");
     printf("\t\t----------------\n");
     printf(
-        "1.个人管理 2.借阅图书 3.查找图书 4.归还图书 5.缴纳罚金"
+        "1.个人管理 2.借阅图书 3.查找图书 4.归还图书 5.缴纳罚金 "
         "6.返回主菜单\n");
     printf("请选择：\n");
     scanf("%d", &n);
@@ -235,7 +235,7 @@ void ShowBookInfo(BookPtr head)
     }
 }  // 显示单本书信息
 
-void Showuser(UserPtr user_head, RecordPtr record_head)
+void Show_all_user(UserPtr user_head, RecordPtr record_head)
 {
     screen_clear();
 
@@ -506,6 +506,50 @@ void ShowUserInfo(UserPtr head, int user_id)
         printf("\n");
     }
 }  // 用户个人信息
+void ShowUserRecord(RecordPtr head, int user_id)
+{
+    screen_clear();
+
+    printf("欢迎您，用户%d\n", user_id);
+    RecordPtr pshow = head;
+    int flag = 0;
+
+    while (pshow)
+    {
+        if (pshow->userID == user_id && pshow->returnDate == 0)
+        {
+            struct tm borrowtime = {0}, duetime = {0};
+            localtime_s(&borrowtime, &pshow->borrowDate);
+            localtime_s(&duetime, &pshow->dueDate);
+            // printf("借阅时间戳：%lld\n应还时间戳：%lld\n",
+            //        (long long)pshow->borrowDate, (long long)pshow->dueDate);
+
+            printf("书籍：%s  借阅日期：%d-%02d-%02d  应还日期：%d-%02d-%02d  ",
+                   pshow->bookName, borrowtime.tm_year + 1900,
+                   borrowtime.tm_mon + 1, borrowtime.tm_mday,
+                   duetime.tm_year + 1900, duetime.tm_mon + 1, duetime.tm_mday);
+            // 逾期提醒逻辑（新增部分）
+            time_t current_time = time(NULL);
+            if (current_time > pshow->dueDate)
+            {
+                printf("【该书已逾期，请立即归还并缴纳罚金！】\n");
+            }
+            else if ((pshow->dueDate - current_time) < 3 * 24 * 60 * 60)
+            {
+                printf("【该书即将逾期，请尽快归还！】\n");
+            }
+
+            printf("\n");
+            flag = 1;
+        }
+        pshow = pshow->next;
+    }
+    if (flag == 0)
+    {
+        printf("您没有借阅书籍\n");
+    }
+}
+
 void ModifyUserInfo(UserPtr head, int user_id)
 {
     screen_clear();
@@ -589,7 +633,8 @@ RecordPtr BorrowBook(BookPtr book_head, UserPtr user_head,
     }
     return recordlist;
 }
-void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
+void ReturnBook(BookPtr book_head, UserPtr user_head, RecordPtr record_head,
+                int user_id)
 {
     screen_clear();
 
@@ -601,6 +646,7 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
     // 查找书籍和用户
     BookPtr pbook = book_head;
     UserPtr puser = user_head;
+    RecordPtr precord = record_head;
     while (puser != NULL && puser->id != user_id)
         puser = puser->next;
     while (pbook != NULL && strcmp(pbook->BookName, book) != 0)
@@ -616,6 +662,25 @@ void ReturnBook(BookPtr book_head, UserPtr user_head, int user_id)
         pbook->stock++;
         pbook->lent_account--;
         puser->borrowed_account--;
+
+        while (precord)
+        {
+            if (strcmp(precord->bookName, pbook->BookName) == 0 &&
+                precord->userID == puser->id)
+            {
+                break;
+            }
+            precord = precord->next;
+        }
+
+        if (precord == NULL)
+        {
+            printf("error!\n");
+            return;
+        }
+
+        time_t nowtime = time(NULL);
+        precord->returnDate = nowtime;
 
         int i = 0, j = 0;
         // 先清除user借阅的book
@@ -695,9 +760,9 @@ void PayFee(RecordPtr head, UserPtr userList, BookPtr bookList, int user_id)
             scanf("%d", &option);
             if (option == 1)
             {
-                ReturnBook(bookList, userList, user_id);
-                time_t nowtime = time(NULL);
-                p->returnDate = nowtime;
+                ReturnBook(bookList, userList, head, user_id);
+                // time_t nowtime = time(NULL);
+                // p->returnDate = nowtime;
                 p->isPaid = 1;
             }
         }
@@ -928,7 +993,8 @@ int main()
                             ModifyBook(bookList);
                             break;
                         case 5:
-                            Showuser(userList, recordList);  // 列出用户信息
+                            Show_all_user(userList,
+                                          recordList);  // 列出用户信息
                             break;
                         case 6:
                             searchBook(bookList);
@@ -958,7 +1024,7 @@ int main()
                     switch (ChoiceSubMenu)
                     {
                         case 1:
-                            ShowUserInfo(userList, *user_id);
+                            ShowUserRecord(recordList, *user_id);
                             printf("是否要修改密码？(1确定 0返回上一级)：");
                             scanf("%d", &ChoiceContinue);
                             if (ChoiceContinue == 1)
@@ -974,7 +1040,8 @@ int main()
                             searchBook(bookList);
                             break;
                         case 4:
-                            ReturnBook(bookList, userList, *user_id);
+                            ReturnBook(bookList, userList, recordList,
+                                       *user_id);
                             break;
                         case 5:
                             PayFee(recordList, userList, bookList, *user_id);
