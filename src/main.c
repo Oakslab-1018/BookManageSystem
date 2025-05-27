@@ -36,8 +36,8 @@ int AdminMenu()
     printf("\t 欢迎管理员\n");
     printf("\t-------------\n");
     printf(
-        "1.查看所有图书 2.添加图书 3.注销图书 4.修改图书 5.管理用户 "
-        "6.查找图书 7.返回主菜单\n");
+        "1.查看所有图书 2.添加图书 3.注销图书 4.修改图书 5.查找图书 "
+        "6.管理用户 7.返回主菜单\n");
     printf("请选择：");
     scanf("%d", &n);
     return n;
@@ -231,7 +231,7 @@ void ShowBookInfo(BookPtr head)
     }
 }  // 显示单本书信息
 
-void Show_all_user(UserPtr user_head, RecordPtr record_head)
+void ShowUser(UserPtr user_head, RecordPtr record_head)
 {
     screen_clear();
 
@@ -981,11 +981,11 @@ int main()
                             ModifyBook(bookList);
                             break;
                         case 5:
-                            Show_all_user(userList,
-                                          recordList);  // 列出用户信息
+                            searchBook(bookList);
                             break;
                         case 6:
-                            searchBook(bookList);
+                            ShowUser(userList,
+                                     recordList);  // 列出用户信息
                             break;
                         case 7:
                             break;

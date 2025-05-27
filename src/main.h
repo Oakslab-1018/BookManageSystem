@@ -46,7 +46,7 @@ int UserMenu();  // 用户菜单
 //管理员函数
 void Showbook(BookPtr head);  // 显示所有书籍信息
 void ShowBookInfo(BookPtr head);//显示单本书借阅信息
-void Show_all_user(UserPtr user_head, RecordPtr record_head);//显示所有用户信息
+void ShowUser(UserPtr user_head, RecordPtr record_head);//显示所有用户信息
 void Show_overdue_user(RecordPtr head);
 BookPtr addBook(BookPtr head);//添加书籍信息
 void searchBook(BookPtr head);//搜索函数
