@@ -175,9 +175,7 @@ void Showbook(BookPtr head)
     else
     {
         printf("\t(图书信息如下):\n");
-        BookPtr pshow = (BookPtr)malloc(sizeof(Book));
-        BookPtr tmp = pshow;  // 记录这个临时结点
-        pshow->next = head;
+        BookPtr pshow = head;
         printf(
             "------------------------------------------------------------------"
             "---"
@@ -191,19 +189,17 @@ void Showbook(BookPtr head)
             "----------"
             "---"
             "---\n");
-        while ((pshow->next) != NULL)
+        while (pshow != NULL)
         {
-            printf("%-16s", pshow->next->ISBN);
-            printf("%-16s", pshow->next->BookName);
-            printf("%-16s", pshow->next->Writer);
-            printf("%-16s", pshow->next->Press);
-            printf("%-16d", pshow->next->total);
-            printf("%-16d", pshow->next->stock);
-
+            printf("%-16s", pshow->ISBN);
+            printf("%-16s", pshow->BookName);
+            printf("%-16s", pshow->Writer);
+            printf("%-16s", pshow->Press);
+            printf("%-16d", pshow->total);
+            printf("%-16d", pshow->stock);
             printf("\n");
             pshow = pshow->next;
         }
-        free(tmp);  // 释放临时结点
     }
     printf("\n查看完成\n");
 }
